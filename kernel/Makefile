@@ -30,6 +30,9 @@ LIBS:=$(LIBS) $(KERNEL_ARCH_LIBS)
 KERNEL_OBJS=\
 $(KERNEL_ARCH_OBJS) \
 kernel/kernel.o \
+$(ARCHDIR)/gdt_flush.o \
+$(ARCHDIR)/gdt.o
+
 
 OBJS=\
 $(ARCHDIR)/crti.o \
@@ -46,14 +49,24 @@ $(ARCHDIR)/crtn.o \
 .PHONY: all clean install install-headers install-kernel
 .SUFFIXES: .o .c .S
 
-all: myos.kernel
+# all: myos.kernel
 
-myos.kernel: $(OBJS) $(ARCHDIR)/linker.ld
+# myos.kernel: $(OBJS) $(ARCHDIR)/linker.ld
+# 	$(CC) -T $(ARCHDIR)/linker.ld -o $@ $(CFLAGS) $(LINK_LIST)
+# 	grub-file --is-x86-multiboot myos.kernel
+
+all: kernel.elf
+
+kernel.elf: $(OBJS) $(ARCHDIR)/linker.ld
 	$(CC) -T $(ARCHDIR)/linker.ld -o $@ $(CFLAGS) $(LINK_LIST)
-	grub-file --is-x86-multiboot myos.kernel
+	grub-file --is-x86-multiboot kernel.elf
 
 $(ARCHDIR)/crtbegin.o $(ARCHDIR)/crtend.o:
 	OBJ=`$(CC) $(CFLAGS) $(LDFLAGS) -print-file-name=$(@F)` && cp "$$OBJ" $@
+
+%.o: %.asm
+	nasm -f elf32 $< -o $@
+
 
 .c.o:
 	$(CC) -MD -c $< -o $@ -std=gnu11 $(CFLAGS) $(CPPFLAGS)
@@ -72,8 +85,13 @@ install-headers:
 	mkdir -p $(DESTDIR)$(INCLUDEDIR)
 	cp -R --preserve=timestamps include/. $(DESTDIR)$(INCLUDEDIR)/.
 
-install-kernel: myos.kernel
+# install-kernel: myos.kernel
+# 	mkdir -p $(DESTDIR)$(BOOTDIR)
+# 	cp myos.kernel $(DESTDIR)$(BOOTDIR)
+
+install-kernel: kernel.elf
 	mkdir -p $(DESTDIR)$(BOOTDIR)
-	cp myos.kernel $(DESTDIR)$(BOOTDIR)
+	cp kernel.elf $(DESTDIR)$(BOOTDIR)
+
 
 -include $(OBJS:.o=.d)

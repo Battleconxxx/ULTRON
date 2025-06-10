@@ -86,6 +86,31 @@ int printf(const char* restrict format, ...) {
 	while (*format != '\0') {
 		size_t maxrem = INT_MAX - written;
 
+
+		if (*format == '\\') {
+		format++;
+		char out;
+		switch (*format) {
+			case 'n': out = '\n'; break;
+			case 't': out = '\t'; break;
+			case 'r': out = '\r'; break;
+			case '\\': out = '\\'; break;
+			case '\"': out = '\"'; break;
+			case '\'': out = '\''; break;
+			default:
+				// Unknown escape: print both
+				if (!print("\\", 1) || !print(format, 1)) return -1;
+				written += 2;
+				format++;
+				continue;
+		}
+		if (!print(&out, 1)) return -1;
+		written++;
+		format++;
+		continue;
+	}
+
+
 		if (format[0] != '%' || format[1] == '%') {
 			if (format[0] == '%')
 				format++;
