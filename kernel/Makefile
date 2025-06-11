@@ -36,6 +36,8 @@ $(ARCHDIR)/gdt.o \
 interrupts/interrupts.o \
 interrupts/idt.o \
 interrupts/isr.o \
+user/user.o \
+memory/memory.o
 
 
 

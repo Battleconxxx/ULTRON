@@ -2,36 +2,9 @@
 #include <kernel/tty.h>
 #include <kernel/gdt.h>
 #include <kernel/interrupts.h>
+#include <kernel/user.h>
+#include <kernel/memory.h>
 
-__attribute__((noreturn)) void user_entry() {
-    const char *message = "Hello from user mode!\n\0";
-
-    // Call SYSCALL_WRITE with the string pointer
-    uint32_t ret;
-    asm volatile(
-        "movl %1, %%eax\n"    // Syscall number (SYSCALL_WRITE) in eax
-        "movl %2, %%ebx\n"    // String pointer in ebx
-        "int $0x80\n"         // Trigger syscall
-        "movl %%eax, %0"      // Store return value from eax
-        : "=r"(ret)           // Output: return value
-        : "r"((uint32_t)SYSCALL_WRITE), "r"((uint32_t)message) // Inputs
-        : "eax", "ebx"        // Clobbered registers
-    );
-
-    message = "You are the best\n\0";
-
-    // Call SYSCALL_WRITE with the string pointer
-    asm volatile(
-        "movl %1, %%eax\n"    // Syscall number (SYSCALL_WRITE) in eax
-        "movl %2, %%ebx\n"    // String pointer in ebx
-        "int $0x80\n"         // Trigger syscall
-        "movl %%eax, %0"      // Store return value from eax
-        : "=r"(ret)           // Output: return value
-        : "r"((uint32_t)SYSCALL_WRITE), "r"((uint32_t)message) // Inputs
-        : "eax", "ebx"        // Clobbered registers
-    );
-    for(;;){}
-}
 
 
 void jump_to_user_mode(uint32_t user_stack, uint32_t entry_point) {
@@ -57,7 +30,9 @@ void jump_to_user_mode(uint32_t user_stack, uint32_t entry_point) {
 
 
 
-void kernel_main(void) {
+void kernel_main(uint32_t magic , multiboot_info_t* mbi) {
+
+
 	terminal_initialize();
 	printf("Hello, kernel World!\n");
 	printf("int: %d , char: %c , String: %s , hex: %x\n", 1234, 'U', "Batman", 1234);
@@ -75,6 +50,9 @@ void kernel_main(void) {
     extern uint8_t kernel_stack_top;
     printf("kernel_stack_top: %x\n", (uint32_t)&kernel_stack_top);
 
-	jump_to_user_mode(stack_top, (uint32_t)user_entry);
+    //memory
+    parse_memory_map(mbi);
+
+	//jump_to_user_mode(stack_top, (uint32_t)user_entry);
 	printf("END");
 }
