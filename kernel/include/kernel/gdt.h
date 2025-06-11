@@ -17,7 +17,11 @@ struct gdt_ptr {
     uint32_t base;
 } __attribute__((packed));
 
+
+
 void gdt_set_gate(int num, uint32_t base, uint32_t limit, uint8_t access, uint8_t gran);
 void gdt_install(void);
+void write_tss(int num, uint16_t ss0, uint32_t esp0);
+void tss_flush();
 
 #endif

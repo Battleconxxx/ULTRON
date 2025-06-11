@@ -13,7 +13,7 @@ EXEC_PREFIX?=$(PREFIX)
 BOOTDIR?=$(EXEC_PREFIX)/boot
 INCLUDEDIR?=$(PREFIX)/include
 
-CFLAGS:=$(CFLAGS) -ffreestanding -Wall -Wextra
+CFLAGS:=$(CFLAGS) -ffreestanding -Wall -Wextra -fno-pic -fno-pie
 CPPFLAGS:=$(CPPFLAGS) -D__is_kernel -Iinclude -I../libc
 LDFLAGS:=$(LDFLAGS) -L../libc -Wl,-no-pie -Wl,--build-id=none
 LIBS:=$(LIBS) -nostdlib -lk -lgcc
@@ -31,7 +31,12 @@ KERNEL_OBJS=\
 $(KERNEL_ARCH_OBJS) \
 kernel/kernel.o \
 $(ARCHDIR)/gdt_flush.o \
-$(ARCHDIR)/gdt.o
+$(ARCHDIR)/tss_flush.o \
+$(ARCHDIR)/gdt.o \
+interrupts/interrupts.o \
+interrupts/idt.o \
+interrupts/isr.o \
+
 
 
 OBJS=\

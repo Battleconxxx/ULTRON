@@ -38,6 +38,12 @@ SECTIONS
 		*(.bss)
 	}
 
+	.stack ALIGN(16) : {
+    PROVIDE(kernel_stack = .);
+    . = . + 0x1000;   /* 4KB stack */
+    PROVIDE(kernel_stack_top = .);
+  }
+
 	/* The compiler may produce other sections, put them in the proper place in
 	   in this file, if you'd like to include them in the final kernel. */
 }

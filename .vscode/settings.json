@@ -1,0 +1,8 @@
+{
+    "files.associations": {
+        "*.ejs": "html",
+        "interrupts.h": "c",
+        "tty.h": "c",
+        "gdt.h": "c"
+    }
+}

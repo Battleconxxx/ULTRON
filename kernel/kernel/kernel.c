@@ -1,18 +1,28 @@
 #include <stdio.h>
-
 #include <kernel/tty.h>
 #include <kernel/gdt.h>
-
-void syscall_handler() {
-    terminal_writestring("syscall received!\n");
-}
-
+#include <kernel/interrupts.h>
 
 __attribute__((noreturn)) void user_entry() {
-    // printf("Hello from user mode!\n");
-    // for(;;){}
-    while (1) { asm volatile("hlt"); }
+    const char *message = "Hello from user mode!\n\0";
 
+    // Call SYSCALL_WRITE with the string pointer
+    uint32_t ret;
+    asm volatile(
+        "movl %1, %%eax\n"    // Syscall number (SYSCALL_WRITE) in eax
+        "movl %2, %%ebx\n"    // String pointer in ebx
+        "int $0x80\n"         // Trigger syscall
+        "movl %%eax, %0"      // Store return value from eax
+        : "=r"(ret)           // Output: return value
+        : "r"((uint32_t)SYSCALL_WRITE), "r"((uint32_t)message) // Inputs
+        : "eax", "ebx"        // Clobbered registers
+    );
+
+    // Infinite loop with hlt, as per original
+    // while (1) {
+    //     asm volatile("hlt");
+    // }
+    for(;;){}
 }
 
 
@@ -45,13 +55,17 @@ void kernel_main(void) {
 	printf("int: %d , char: %c , String: %s , hex: %x\n", 1234, 'U', "Batman", 1234);
 	printf("Line \nBreak\n");
 	gdt_install();
-	printf("GDT Setup done");
+	printf("GDT Setup done\n");
+    init_interrupts();
+    printf("Interrupts Initialized\n");
 	
 	uint32_t user_stack[1024];
-	printf("Stack created");
+	printf("User Stack created\n");
 	uint32_t stack_top = (uint32_t)&user_stack[1024];
-	printf("stack top: %x", (uint32_t)stack_top);
+	printf("User stack top: %x ", (uint32_t)stack_top);
 	printf("user_entry: %x\n", (uint32_t)user_entry);
+    extern uint8_t kernel_stack_top;
+    printf("kernel_stack_top: %x\n", (uint32_t)&kernel_stack_top);
 
 	jump_to_user_mode(stack_top, (uint32_t)user_entry);
 	printf("END");
