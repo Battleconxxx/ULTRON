@@ -18,10 +18,18 @@ __attribute__((noreturn)) void user_entry() {
         : "eax", "ebx"        // Clobbered registers
     );
 
-    // Infinite loop with hlt, as per original
-    // while (1) {
-    //     asm volatile("hlt");
-    // }
+    message = "You are the best\n\0";
+
+    // Call SYSCALL_WRITE with the string pointer
+    asm volatile(
+        "movl %1, %%eax\n"    // Syscall number (SYSCALL_WRITE) in eax
+        "movl %2, %%ebx\n"    // String pointer in ebx
+        "int $0x80\n"         // Trigger syscall
+        "movl %%eax, %0"      // Store return value from eax
+        : "=r"(ret)           // Output: return value
+        : "r"((uint32_t)SYSCALL_WRITE), "r"((uint32_t)message) // Inputs
+        : "eax", "ebx"        // Clobbered registers
+    );
     for(;;){}
 }
 

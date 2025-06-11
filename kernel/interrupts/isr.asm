@@ -93,33 +93,46 @@ global isr80
 extern syscall_isr_handler
 
 isr80:
+    cli
+
+    ; Save data segment selectors
     push ds
     push es
-    push fs
-    push gs
 
-    mov cx, 0x10
-    mov ds, cx
-    mov es, cx
-    mov fs, cx
-    mov gs, cx
+    ; Load kernel data segment
+    mov ax, 0x10
+    mov ds, ax
+    mov es, ax
 
-    pusha
-    push 0
-    push 0x80
+    pusha                   ; Push general-purpose registers
 
-    push esp        ; Push esp directly
+    ; Get pointer to `registers_t` struct (esp points to saved regs)
+    push esp
     call syscall_isr_handler
     add esp, 4
 
-    add esp, 8
-    popa
-    pop gs
-    pop fs
+    popa                    ; Restore general-purpose registers
     pop es
     pop ds
 
-    iretd
+    ; Now build the iret frame to return to user mode
+
+    ; Load user esp from stack (stored in TSS or pushed earlier — use saved value)
+    ; We'll assume it was passed in edi (for example)
+    ; and return to user_entry (in eax)
+    
+    ; For now hardcode values for demo:
+    mov eax, [esp + 28]       ; user_eip = value of EIP before int
+    mov ebx, [esp + 32]       ; user_esp = value of ESP before int
+
+    push 0x23                 ; user SS (RPL 3)
+    push ebx                  ; user ESP
+    pushf                     ; user EFLAGS
+    push 0x1B                 ; user CS (RPL 3)
+    push eax                  ; user EIP
+
+    iretd                     ; Return to user mode!
+
 
 
 
