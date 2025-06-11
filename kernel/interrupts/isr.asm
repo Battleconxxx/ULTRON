@@ -95,43 +95,42 @@ extern syscall_isr_handler
 isr80:
     cli
 
-    ; Save data segment selectors
+    ; Save segment registers
     push ds
     push es
 
-    ; Load kernel data segment
-    mov ax, 0x10
-    mov ds, ax
-    mov es, ax
+    ; Load kernel data segments (safely using cx)
+    mov cx, 0x10
+    mov ds, cx
+    mov es, cx
 
-    pusha                   ; Push general-purpose registers
+    pusha                   ; saves eax, ecx, edx, ebx, esp (dummy), ebp, esi, edi
 
-    ; Get pointer to `registers_t` struct (esp points to saved regs)
-    push esp
+    ; Capture return-to-user values *without* touching eax/edx
+    mov ebx, [esp + 36]     ; user_ss
+    mov ecx, [esp + 40]     ; user_esp
+    mov esi, [esp + 44]     ; eflags
+    mov edi, [esp + 48]     ; user_cs
+    mov ebp, [esp + 52]     ; user_eip
+
+    ; Push return frame in correct order: SS, ESP, EFLAGS, CS, EIP
+    push ebx
+    push ecx
+    push esi
+    push edi
+    push ebp
+
+    push esp                ; pointer to registers_t (after pusha)
     call syscall_isr_handler
     add esp, 4
 
-    popa                    ; Restore general-purpose registers
+    add esp, 20             ; clean up return frame
+
+    popa
     pop es
     pop ds
 
-    ; Now build the iret frame to return to user mode
-
-    ; Load user esp from stack (stored in TSS or pushed earlier — use saved value)
-    ; We'll assume it was passed in edi (for example)
-    ; and return to user_entry (in eax)
-    
-    ; For now hardcode values for demo:
-    mov eax, [esp + 28]       ; user_eip = value of EIP before int
-    mov ebx, [esp + 32]       ; user_esp = value of ESP before int
-
-    push 0x23                 ; user SS (RPL 3)
-    push ebx                  ; user ESP
-    pushf                     ; user EFLAGS
-    push 0x1B                 ; user CS (RPL 3)
-    push eax                  ; user EIP
-
-    iretd                     ; Return to user mode!
+    iretd
 
 
 
