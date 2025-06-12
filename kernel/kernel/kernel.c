@@ -4,6 +4,7 @@
 #include <kernel/interrupts.h>
 #include <kernel/user.h>
 #include <kernel/memory.h>
+#include <kernel/fs.h>
 
 
 
@@ -52,7 +53,13 @@ void kernel_main(uint32_t magic , multiboot_info_t* mbi) {
 
     //memory
     parse_memory_map(mbi);
+    init_memory();
+    //init_paging();
 
-	//jump_to_user_mode(stack_top, (uint32_t)user_entry);
+    //RAMFS
+    ramfs_init();
+    printf("RAMFS initialized\n");
+
+	jump_to_user_mode(stack_top, (uint32_t)user_entry);
 	printf("END");
 }

@@ -40,6 +40,15 @@ void parse_memory_map(multiboot_info_t* mbi);
 #define MAX_FRAMES (TOTAL_MEMORY / FRAME_SIZE)
 #define BITMAP_SIZE (MAX_FRAMES / 8)
 
+void init_memory();
 
+#define PAGE_PRESENT 0x1
+#define PAGE_RW      0x2
+#define PAGE_USER    0x4
+#define KERNEL_VIRTUAL_BASE 0xC0000000
+#define PHYS_TO_VIRT(addr) ((void*)((addr) + 0xC0000000))
+
+
+void init_paging();
 
 #endif

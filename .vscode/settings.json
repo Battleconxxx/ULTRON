@@ -3,6 +3,7 @@
         "*.ejs": "html",
         "interrupts.h": "c",
         "tty.h": "c",
-        "gdt.h": "c"
+        "gdt.h": "c",
+        "string.h": "c"
     }
 }

@@ -37,7 +37,8 @@ interrupts/interrupts.o \
 interrupts/idt.o \
 interrupts/isr.o \
 user/user.o \
-memory/memory.o
+memory/memory.o \
+FS/fs.o
 
 
 
