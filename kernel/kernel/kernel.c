@@ -6,9 +6,46 @@
 #include <kernel/memory.h>
 #include <kernel/fs.h>
 
+static inline void outb(uint16_t port, uint8_t val) {
+    asm volatile("outb %0, %1" : : "a"(val), "Nd"(port));
+}
 
+// void jump_to_user_mode(uint32_t user_stack, uint32_t entry_point) {
+
+
+//     uint32_t eflags;
+//     asm volatile("pushf; pop %0" : "=r"(eflags));
+//     eflags |= (1 << 9);  // Set IF (interrupt enable)
+
+
+//     asm volatile (
+//         "cli\n"                    // disable interrupts
+//         "mov $0x23, %%ax\n"        // 0x23 = User data selector | RPL 3
+//         "mov %%ax, %%ds\n"
+//         "mov %%ax, %%es\n"
+//         "mov %%ax, %%fs\n"
+//         "mov %%ax, %%gs\n"
+
+//         "pushl $0x23\n"            // SS = user data segment
+//         "pushl %0\n"               // ESP = user stack pointer
+//         "pushl %2\n"                  // EFLAGS
+//         "pushl $0x1B\n"            // CS = user code segment
+//         "pushl %1\n"               // EIP = user mode entry point
+//         "iret\n"
+//         :
+//         : "r"(user_stack), "r"(entry_point), "r"(eflags)
+// 		:"memory"
+//     );
+// }
 
 void jump_to_user_mode(uint32_t user_stack, uint32_t entry_point) {
+
+
+    uint32_t eflags;
+    asm volatile("pushf; pop %0" : "=r"(eflags));
+    eflags |= (1 << 9);  // Set IF (interrupt enable)
+
+
     asm volatile (
         "cli\n"                    // disable interrupts
         "mov $0x23, %%ax\n"        // 0x23 = User data selector | RPL 3
@@ -19,12 +56,12 @@ void jump_to_user_mode(uint32_t user_stack, uint32_t entry_point) {
 
         "pushl $0x23\n"            // SS = user data segment
         "pushl %0\n"               // ESP = user stack pointer
-        "pushf\n"                  // EFLAGS
+        "pushl %2\n"                  // EFLAGS
         "pushl $0x1B\n"            // CS = user code segment
         "pushl %1\n"               // EIP = user mode entry point
         "iret\n"
         :
-        : "r"(user_stack), "r"(entry_point)
+        : "r"(user_stack), "r"(entry_point), "r"(eflags)
 		:"memory"
     );
 }
@@ -60,6 +97,7 @@ void kernel_main(uint32_t magic , multiboot_info_t* mbi) {
     ramfs_init();
     printf("RAMFS initialized\n");
 
+    outb(0x21, 0xFD); // This makes sure all PIC is disabled and only keyboard is enabled
 	jump_to_user_mode(stack_top, (uint32_t)user_entry);
 	printf("END");
 }

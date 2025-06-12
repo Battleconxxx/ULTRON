@@ -88,6 +88,21 @@ isr32:
     sti
     iret
 
+global isr33
+extern keyboard_handler
+
+isr33:
+    cli
+    pusha
+    call keyboard_handler
+    popa
+    ; Send EOI to PIC
+    mov al, 0x20
+    out 0x20, al
+    sti
+    iret
+
+
 
 global isr80
 extern syscall_isr_handler
