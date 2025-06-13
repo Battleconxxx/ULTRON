@@ -38,7 +38,8 @@ interrupts/idt.o \
 interrupts/isr.o \
 user/user.o \
 memory/memory.o \
-FS/fs.o
+FS/fs.o \
+$(ARCHDIR)/keyboard.o
 
 
 

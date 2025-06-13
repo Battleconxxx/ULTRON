@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <kernel/tty.h>
 #include <kernel/interrupts.h>
+#include <kernel/keyboard_buffer.h>
 
 extern void isr0();
 extern void isr8();
@@ -119,12 +120,24 @@ void keyboard_handler() {
     if (scancode < 128) {
         char c = scancode_ascii[scancode];
         if (c) {
-            char str[2] = {c, '\0'};
-            terminal_writestring(str);
+
+            if(c == '\n'){
+                kb_ready = 1;
+            }
+
+            int next = (kb_head + 1) % KB_BUFFER_SIZE;
+            if (next != kb_tail) {
+                kb_buffer[kb_head] = c;
+                kb_head = next;
+            }
+
+            // char str[2] = {c, '\0'};
+            // terminal_writestring(str);
         }
     }
 }
 
+#define SYSCALL_CLEAR 4
 
 void syscall_isr_handler(registers_t *regs) {
     uint32_t ret = (uint32_t)-1; // Default return value for unknown syscall
@@ -135,6 +148,10 @@ void syscall_isr_handler(registers_t *regs) {
         case SYSCALL_WRITE:
             terminal_writestring((const char*)regs->edx); // arg1 is pointer to string
             ret = 0;
+            break;
+
+        case SYSCALL_CLEAR:
+            terminal_initialize();
             break;
     }
 
