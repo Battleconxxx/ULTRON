@@ -1,7 +1,9 @@
 #include <stdio.h>
+#include <string.h>
 #include <kernel/tty.h>
 #include <kernel/interrupts.h>
 #include <kernel/keyboard_buffer.h>
+#include <kernel/syscall_args.h>
 
 extern void isr0();
 extern void isr8();
@@ -9,6 +11,7 @@ extern void isr13();
 extern void isr14();
 extern void isr32();
 extern void isr33();
+extern void isr43();
 extern void isr80();
 extern void default_isr();
 
@@ -61,10 +64,11 @@ void init_interrupts(){
     idt_install();
     idt_set_gate(0, (uint32_t)isr0, 0x08, 0x8E); // Divide-by-zero
     idt_set_gate(8, (uint32_t)isr8, 0x08, 0x8E); // Double Fault
-    idt_set_gate(14, (uint32_t)isr14, 0x08, 0x8E); // Page fault
-    //idt_set_gate(32, (uint32_t)isr32, 0x08, 0x8E); // Timer
-    idt_set_gate(0x21, (uint32_t)isr33, 0x08, 0x8E); //Keyboard interrupt
     idt_set_gate(13, (uint32_t)isr13, 0x08, 0x8E); // gpf
+    idt_set_gate(14, (uint32_t)isr14, 0x08, 0x8E); // Page fault
+    idt_set_gate(32, (uint32_t)isr32, 0x08, 0x8E); // Timer
+    idt_set_gate(0x21, (uint32_t)isr33, 0x08, 0x8E); //Keyboard interrupt
+    idt_set_gate(43, (uint32_t)isr43, 0x08, 0x8E); // 0x20 + 11 = IRQ11
     idt_set_gate(0x80, (uint32_t)isr80, 0x08, 0xEE);  // Interrupt gate, DPL=3 (0xEE)
 
     extern void idt_load();
@@ -86,21 +90,9 @@ void page_fault_handler(uint32_t fault_addr, uint32_t error_code){
     for(;;){}
 }
 
-void timer_handler(uint32_t error_code, uint32_t interrupt_number) {
-    asm volatile("cli"); // Disable interrupts
-    // Acknowledge the interrupt (send EOI to PIC)
-    //outb(0x20, 0x20); // EOI to PIC1 (master)
-
-    // Debug output (optional, use with caution to avoid recursion)
-    printf("Timer interrupt (IRQ0) fired, tick %u error_code : %x\n", interrupt_number, error_code);
-
-    // Optionally, increment a system tick counter
+void timer_handler(uint32_t error_code, uint32_t interrupt_number) {    
     static uint32_t tick = 0;
-    tick++;
-    // volatile uint32_t *debug = (volatile uint32_t *)0xC0001000; // Mapped address
-    // debug[3] = tick; // Store tick count
-
-    // Re-enable interrupts (handled by iret in isr32)
+    tick++;    
 }
 
 
@@ -131,31 +123,121 @@ void keyboard_handler() {
                 kb_head = next;
             }
 
-            // char str[2] = {c, '\0'};
-            // terminal_writestring(str);
+             char str[2] = {c, '\0'};
+             terminal_writestring(str);
         }
     }
 }
 
+
+void virtio_irq_handler(uint32_t int_no, uint32_t err_code) {
+    uint8_t status = inb(0xc040 + 0x13);
+
+    if (status & 1) {
+        printf("VirtIO interrupt: Queue event!\n");
+
+        // Now read from used ring or handle response
+        // Check if used.idx != user_ring_idx
+    } else if (status & 2) {
+        printf("VirtIO interrupt: Configuration change.\n");
+    } else {
+        printf("VirtIO interrupt: Unknown cause.\n");
+    }
+}
+
+
 #define SYSCALL_CLEAR 4
+#define SYSCALL_OPEN 5
+#define SYSCALL_READFD 6
+#define SYSCALL_WRITEFD 7
+#define SYSCALL_CLOSEFD 8
+
+extern syscall_args_t g_syscall_args;
+
+int syscall_read(int fd, void* buf, int count) {
+    // Stub: simulate reading some text
+    const char* reply = "Simulated AI reply\n";
+    int len = strlen(reply);
+    if (count < len) len = count;
+    memcpy(buf, reply, len);
+    return len;
+}
+
+
 
 void syscall_isr_handler(registers_t *regs) {
-    uint32_t ret = (uint32_t)-1; // Default return value for unknown syscall
-    // uint32_t edx_val;
-    // asm volatile("mov %%edx, %0" : "=r"(edx_val));
-    // terminal_writestring((const char*)edx_val);
+    uint32_t ret = (uint32_t)-1;
+
     switch (regs->eax) {
         case SYSCALL_WRITE:
-            terminal_writestring((const char*)regs->edx); // arg1 is pointer to string
+            terminal_writestring((const char*)regs->edx);
             ret = 0;
             break;
 
         case SYSCALL_CLEAR:
             terminal_initialize();
+            ret = 0;
             break;
+
+        case SYSCALL_OPEN: {
+            const char* path = (const char*) regs->ebx;
+            if (strncmp(path, "/dev/virtio-ports/ai", 20) == 0) {
+                ret = 3;  // Return dummy FD
+            } else {
+                ret = (uint32_t)-1;
+            }
+            break;
+        }
+
+        case SYSCALL_WRITEFD: {
+            int fd = regs->ebx;
+            const char* buf = (const char*) g_syscall_args.buf;
+            int count = g_syscall_args.count;
+
+            if (fd == 3) {
+                // Send buffer to QEMU via port 0xE9 (for debug), or use virtio mapping
+                for (int i = 0; i < count; i++) {
+                    outb(0xE9, buf[i]);  // QEMU debug console (temporary bridge)
+                }
+                outb(0xE9, '\n');
+                ret = count;
+            } else {
+                ret = (uint32_t)-1;
+            }
+            break;
+        }
+
+        case SYSCALL_READFD: {
+            int fd = regs->ebx;
+            char* buf = (char*) g_syscall_args.buf;
+            int count = g_syscall_args.count;
+
+            if (fd == 3) {
+                // Simulate response — in real setup, this would read from virtio or mmio
+                const char* reply = "Hello from TinyLlama!\n";
+                int len = strlen(reply);
+                if (count < len) len = count;
+                memcpy(buf, reply, len);
+                ret = len;
+            } else {
+                ret = (uint32_t)-1;
+            }
+            break;
+        }
+
+        case SYSCALL_CLOSEFD: {
+            int fd = regs->ebx;
+            if (fd == 3) {
+                terminal_writestring("Closed fd\n");
+                ret = 0;
+            } else {
+                ret = (uint32_t)-1;
+            }
+            break;
+        }
     }
 
-    regs->eax = ret; // Store return value in eax
+    regs->eax = ret;
 }
 
 void double_fault_handler(uint32_t error_code, uint32_t int_no) {

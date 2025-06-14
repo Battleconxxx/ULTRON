@@ -39,7 +39,11 @@ interrupts/isr.o \
 user/user.o \
 memory/memory.o \
 FS/fs.o \
-$(ARCHDIR)/keyboard.o
+$(ARCHDIR)/keyboard.o \
+syscall_args.o \
+io/io.o \
+io/pci.o \
+io/virtio_serial.o
 
 
 

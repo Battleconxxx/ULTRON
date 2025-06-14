@@ -104,6 +104,27 @@ isr33:
 
 
 
+global isr43
+extern virtio_irq_handler
+
+isr43:
+    cli
+    pusha
+    push dword 0           ; dummy error code
+    push dword 43          ; interrupt number
+    call virtio_irq_handler
+    add esp, 8
+    popa
+
+    ; Send EOI
+    mov al, 0x20
+    out 0xA0, al           ; slave PIC
+    out 0x20, al           ; master PIC
+    sti
+    iret
+
+
+
 global isr80
 extern syscall_isr_handler
 

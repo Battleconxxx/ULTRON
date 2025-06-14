@@ -5,6 +5,8 @@
 #include <kernel/user.h>
 #include <kernel/memory.h>
 #include <kernel/fs.h>
+#include <kernel/pci.h>
+#include <kernel/virtio_serial.h>
 
 static inline void outb(uint16_t port, uint8_t val) {
     asm volatile("outb %0, %1" : : "a"(val), "Nd"(port));
@@ -51,12 +53,6 @@ void kernel_main(uint32_t magic , multiboot_info_t* mbi) {
 	printf("GDT Setup done\n");
     init_interrupts();
     printf("Interrupts Initialized\n");
-	
-	// uint32_t user_stack[2048];
-	// printf("User Stack created\n");
-	// uint32_t stack_top = (uint32_t)&user_stack[2048];
-	// printf("User stack top: %x ", (uint32_t)stack_top);
-
     uint32_t* user_stack = (uint32_t*)0x200000;
     uint32_t stack_top = (uint32_t)(user_stack + 2048);
 
@@ -73,8 +69,26 @@ void kernel_main(uint32_t magic , multiboot_info_t* mbi) {
     //RAMFS
     ramfs_init();
     printf("RAMFS initialized\n");
+    // VirtIO IRQ 11 → bit 3 on slave PIC (IRQ11 - 8 = 3)
+    // outb(0x21, 0xFB); // Unmask IRQ1 (keyboard)
+    // outb(0xA1, 0xF7); // Unmask IRQ11
 
-    outb(0x21, 0xFD); // This makes sure all PIC is disabled and only keyboard is enabled
+
+    // Mask all on PIC1 (master)
+    outb(0x21, 0xFF);   // All 8 IRQs disabled
+
+// Mask all except IRQ11 (bit 3 = 0) on PIC2 (slave)
+    outb(0xA1, 0xF7);   // 0b11110111: only IRQ11 unmasked
+
+
+
+    pci_scan_for_virtio();
+    virtio_serial_init();
+
+    //outb(0x21, 0xFD); // This makes sure all PIC is disabled and only keyboard is enabled
+    // Master PIC handles IRQ 0–7, Slave PIC handles IRQ 8–15
+
+
 	jump_to_user_mode(stack_top, (uint32_t)user_entry);
 	printf("END");
 }
