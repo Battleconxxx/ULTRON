@@ -4,5 +4,5 @@ cd kernel/
 make clean
 make
 cd ..
-qemu-system-i386   -kernel kernel/kernel.elf   -m 512M   -chardev socket,path=/tmp/ai.sock,server=on,wait=off,id=aiport   -device virtio-serial   -device virtserialport,chardev=aiport,name=ai   -machine smm=off -s -S -no-reboot   -serial mon:stdio   -d int
+qemu-system-i386   -kernel kernel/kernel.elf   -m 512M   -chardev socket,path=./ai.sock,server=on,wait=on,id=aiport   -device virtio-serial-pci   -device virtserialport,chardev=aiport,name=org.qemu.console.ai   -machine pc,smm=off -no-reboot -serial mon:stdio   -d int
 

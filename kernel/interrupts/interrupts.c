@@ -4,6 +4,7 @@
 #include <kernel/interrupts.h>
 #include <kernel/keyboard_buffer.h>
 #include <kernel/syscall_args.h>
+#include <kernel/virtio_serial.h>
 
 extern void isr0();
 extern void isr8();
@@ -123,8 +124,8 @@ void keyboard_handler() {
                 kb_head = next;
             }
 
-             char str[2] = {c, '\0'};
-             terminal_writestring(str);
+            //  char str[2] = {c, '\0'};
+            //  terminal_writestring(str);
         }
     }
 }
@@ -171,6 +172,8 @@ void syscall_isr_handler(registers_t *regs) {
     switch (regs->eax) {
         case SYSCALL_WRITE:
             terminal_writestring((const char*)regs->edx);
+            const char* message = "hello from OS\n";
+            virtio_serial_send(message, 14);
             ret = 0;
             break;
 

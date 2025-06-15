@@ -34,6 +34,12 @@ struct virtqueue {
     struct virtq_used used;
 } __attribute__((packed, aligned(4096)));
 
+struct virtio_console_control {
+    uint32_t id;
+    uint16_t event;
+    uint16_t value;
+};
+
 static volatile struct virtqueue vq;
 
 void setup_virtqueue();

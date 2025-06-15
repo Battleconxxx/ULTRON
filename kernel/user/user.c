@@ -154,6 +154,8 @@ __attribute__((noreturn)) void user_entry() {
         } else if (strncmp(input, "exit", 4) == 0) {
             sys_write("Exiting...\n");
             while (1);
+        } else if (strncmp(input, "send", 4) == 0) {
+            sys_write("send...\n");
         } else if (strncmp(input, "ai ", 3) == 0) {
             // Send input+3 to the AI bridge via /dev/virtio-ports/ai
             int fd = sys_open("/dev/virtio-ports/ai", O_RDWR);
