@@ -189,7 +189,7 @@ void virtio_serial_init() {
     name_msg->event = VIRTIO_CONSOLE_CTRL_PORT_NAME;  // == 2
 
     // copy the null‑terminated name
-    const char* port_name = "org.qemu.console.ai";
+    const char* port_name = "org.qemu.console.OS";
     size_t namelen = strlen(port_name) + 1;  // include '\0'
     memcpy(name_msg->value, port_name, namelen);
 

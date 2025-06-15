@@ -156,11 +156,10 @@ __attribute__((noreturn)) void user_entry() {
             while (1);
         } else if (strncmp(input, "send", 4) == 0) {
             sys_write("send...\n");
-        } else if (strncmp(input, "ai ", 3) == 0) {
-            // Send input+3 to the AI bridge via /dev/virtio-ports/ai
-            int fd = sys_open("/dev/virtio-ports/ai", O_RDWR);
+        } else if (strncmp(input, "socket ", 3) == 0) {
+            int fd = sys_open("/dev/virtio-ports/Socket", O_RDWR);
             if (fd < 0) {
-                sys_write("AI device not available\n");
+                sys_write("Device not available\n");
             } else {
                 sys_writefd(fd, input + 3, strlen(input + 3));
                 sys_writefd(fd, "\n", 1); // Send newline delimiter

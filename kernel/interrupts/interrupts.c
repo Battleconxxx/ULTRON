@@ -157,7 +157,7 @@ extern syscall_args_t g_syscall_args;
 
 int syscall_read(int fd, void* buf, int count) {
     // Stub: simulate reading some text
-    const char* reply = "Simulated AI reply\n";
+    const char* reply = "Simulated reply\n";
     int len = strlen(reply);
     if (count < len) len = count;
     memcpy(buf, reply, len);
@@ -184,7 +184,7 @@ void syscall_isr_handler(registers_t *regs) {
 
         case SYSCALL_OPEN: {
             const char* path = (const char*) regs->ebx;
-            if (strncmp(path, "/dev/virtio-ports/ai", 20) == 0) {
+            if (strncmp(path, "/dev/virtio-ports/socket", 20) == 0) {
                 ret = 3;  // Return dummy FD
             } else {
                 ret = (uint32_t)-1;
