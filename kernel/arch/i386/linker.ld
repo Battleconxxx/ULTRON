@@ -44,6 +44,15 @@ SECTIONS
     PROVIDE(kernel_stack_top = .);
   }
 
+  /* Heap region allocation */
+    /* Reserve 32 MiB immediately after the stack */
+    .heap BLOCK(4K) : ALIGN(4K)
+    {
+        PROVIDE(__heap_start = .);
+        . = . + 32M;
+        PROVIDE(__heap_end   = .);
+    }
+
   __kernel_end = .;
 
 	/* The compiler may produce other sections, put them in the proper place in

@@ -10,6 +10,8 @@ cp sysroot/boot/myos.kernel isodir/boot/myos.kernel
 cat > isodir/boot/grub/grub.cfg << EOF
 menuentry "myos" {
 	multiboot /boot/myos.kernel
+	module /boot/stories15M.bin stories15M.bin
+	module /boot/tokenizer.bin tokenizer.bin
 }
 EOF
 grub-mkrescue -o myos.iso isodir

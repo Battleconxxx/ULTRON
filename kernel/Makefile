@@ -17,6 +17,8 @@ CFLAGS:=$(CFLAGS) -ffreestanding -Wall -Wextra -fno-pic -fno-pie
 CPPFLAGS:=$(CPPFLAGS) -D__is_kernel -Iinclude -I../libc
 LDFLAGS:=$(LDFLAGS) -L../libc -Wl,-no-pie -Wl,--build-id=none
 LIBS:=$(LIBS) -nostdlib -lk -lgcc
+CXX = i686-elf-g++
+
 
 ARCHDIR=arch/$(HOSTARCH)
 
@@ -40,11 +42,7 @@ user/user.o \
 memory/memory.o \
 FS/fs.o \
 $(ARCHDIR)/keyboard.o \
-syscall_args.o \
-io/io.o \
-io/pci.o \
-io/virtio_serial.o
-
+initrd/initrd.o \
 
 
 OBJS=\
@@ -62,17 +60,17 @@ $(ARCHDIR)/crtn.o \
 .PHONY: all clean install install-headers install-kernel
 .SUFFIXES: .o .c .S
 
-# all: myos.kernel
+all: myos.kernel
 
-# myos.kernel: $(OBJS) $(ARCHDIR)/linker.ld
-# 	$(CC) -T $(ARCHDIR)/linker.ld -o $@ $(CFLAGS) $(LINK_LIST)
-# 	grub-file --is-x86-multiboot myos.kernel
-
-all: kernel.elf
-
-kernel.elf: $(OBJS) $(ARCHDIR)/linker.ld
+myos.kernel: $(OBJS) $(ARCHDIR)/linker.ld
 	$(CC) -T $(ARCHDIR)/linker.ld -o $@ $(CFLAGS) $(LINK_LIST)
-	grub-file --is-x86-multiboot kernel.elf
+	grub-file --is-x86-multiboot myos.kernel
+
+# all: kernel.elf
+
+# kernel.elf: $(OBJS) $(ARCHDIR)/linker.ld
+# 	$(CC) -T $(ARCHDIR)/linker.ld -o $@ $(CFLAGS) $(LINK_LIST)
+# 	grub-file --is-x86-multiboot kernel.elf
 
 $(ARCHDIR)/crtbegin.o $(ARCHDIR)/crtend.o:
 	OBJ=`$(CC) $(CFLAGS) $(LDFLAGS) -print-file-name=$(@F)` && cp "$$OBJ" $@
@@ -87,6 +85,9 @@ $(ARCHDIR)/crtbegin.o $(ARCHDIR)/crtend.o:
 .S.o:
 	$(CC) -MD -c $< -o $@ $(CFLAGS) $(CPPFLAGS)
 
+.cpp.o:
+	$(CXX) -MD -c $< -o $A -std=c++17 $(CFLAGS) $(CPPFLAGS) -fno-exceptions -fno-rtti
+
 clean:
 	rm -f myos.kernel
 	rm -f $(OBJS) *.o */*.o */*/*.o
@@ -98,13 +99,13 @@ install-headers:
 	mkdir -p $(DESTDIR)$(INCLUDEDIR)
 	cp -R --preserve=timestamps include/. $(DESTDIR)$(INCLUDEDIR)/.
 
-# install-kernel: myos.kernel
-# 	mkdir -p $(DESTDIR)$(BOOTDIR)
-# 	cp myos.kernel $(DESTDIR)$(BOOTDIR)
-
-install-kernel: kernel.elf
+install-kernel: myos.kernel
 	mkdir -p $(DESTDIR)$(BOOTDIR)
-	cp kernel.elf $(DESTDIR)$(BOOTDIR)
+	cp myos.kernel $(DESTDIR)$(BOOTDIR)
+
+# install-kernel: kernel.elf
+# 	mkdir -p $(DESTDIR)$(BOOTDIR)
+# 	cp kernel.elf $(DESTDIR)$(BOOTDIR)
 
 
 -include $(OBJS:.o=.d)

@@ -4,6 +4,9 @@
         "interrupts.h": "c",
         "tty.h": "c",
         "gdt.h": "c",
-        "string.h": "c"
+        "string.h": "c",
+        "ggml.h": "c",
+        "stdlib.h": "c",
+        "stdio.h": "c"
     }
 }

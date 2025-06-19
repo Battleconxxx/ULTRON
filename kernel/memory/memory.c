@@ -92,103 +92,44 @@ void init_memory(){
     printf("Memory initialized with %d usable frames\n", count);
 }
 
-//Paging
+//heap
 
-uint32_t page_directory[1024] __attribute__((aligned(4096)));
-uint32_t first_page_table[1024] __attribute__((aligned(4096)));
+static uint8_t *heap_ptr;
 
-void init_paging(){
-
-    for(int i=0; i< 1024; i++)page_directory[i] = 0;
-
-    static uint32_t identity_tables[4][1024] __attribute__((aligned(4096)));
-    for(int table = 0; table<4; table++){
-        for(int i=0; i<1024; i++){
-            identity_tables[table][i] = ((table * 0x400000) + (i * 0x1000)) | PAGE_PRESENT | PAGE_RW | PAGE_USER;
-        }
-        page_directory[table] = ((uint32_t)identity_tables[table]) | PAGE_PRESENT | PAGE_RW | PAGE_USER;
-    }
-
-    //reserve the first 4096 frames
-    // ✅ Reserve first 16 MiB in the frame bitmap (4096 frames)
-    for (uint32_t i = 0; i < 4096; i++) {
-        set_frame(i);
-    }
-
-    // Map kernel higher-half: 0xC0000000 - 0xC03FFFFF (maps 0x00100000 physical)
-    static uint32_t kernel_table[1024] __attribute__((aligned(4096)));
-    for(int i=0; i<1024; i++){
-        kernel_table[i] = (i * 0x1000 + 0x00100000) | PAGE_PRESENT | PAGE_RW; 
-    }
-    page_directory[KERNEL_VIRTUAL_BASE >> 22] = ((uint32_t)kernel_table) | PAGE_PRESENT | PAGE_RW;
-
-    page_directory[1023] = ((uint32_t)page_directory) | PAGE_PRESENT | PAGE_RW;
-
-
-        // Reserve kernel physical space (example: 1 MiB to 2 MiB)
-    for (uint32_t addr = 0x00100000; addr < 0x00200000; addr += FRAME_SIZE) {
-        set_frame(addr / FRAME_SIZE);
-    }
-
-    // Load page directory into CR3
-    asm volatile ("mov %0, %%cr3" :: "r"(page_directory));
-
-    // Enable paging by setting the PG bit in CR0
-    uint32_t cr0;
-    asm volatile ("mov %%cr0, %0" : "=r"(cr0));
-    cr0 |= 0x80000000;
-    asm volatile ("mov %0, %%cr0" :: "r"(cr0));
-    printf("Paging initialized\n");
+void malloc_init(void){
+    heap_ptr = __heap_start;
 }
 
-void map_page(uint32_t virtual_addr, uint32_t physical_addr, uint32_t flags){
+void *malloc(size_t size){
+    if(!heap_ptr)malloc_init;
 
-    uint32_t pd_index = virtual_addr >> 22;
-    uint32_t pt_index = (virtual_addr >> 12) & 0x3FF;
-    printf("pd_index: %d\n", pd_index);
-    printf("pt_index: %d\n", pt_index);
-
-    uint32_t* page_table;
-
-    if (!(page_directory[pd_index] & PAGE_PRESENT)) {
-        uint32_t frame = first_free_frame();
-        if (frame == (uint32_t)-1) {
-            printf("map_page: No free frames for page table\n");
-            return;
-        }
-        printf("Frame number: %d\n",frame);
-        set_frame(frame);
-        uint32_t pt_phys = frame * FRAME_SIZE;
-
-        void* pt_virt = (void*)pt_phys;
-        memset(pt_virt, 0, FRAME_SIZE);
-
-        uint32_t pd_flags = PAGE_PRESENT | PAGE_RW;
-        if (flags & PAGE_USER) pd_flags |= PAGE_USER;
-        page_directory[pd_index] = pt_phys | pd_flags;
-
-        //page_table = (uint32_t*)pt_virt;
-
-        if(virtual_addr>=0xC0000000){
-            page_table = (uint32_t*)PHYS_TO_VIRT(pt_phys);
-        }else{
-            page_table = (uint32_t*)pt_virt;
-        }
-
-    }else{
-        uint32_t pt_phys = page_directory[pd_index] & ~0xFFF;
-        void* pt_virt = (void*)pt_phys;
-        //page_table = (uint32_t*)pt_virt;
-
-        if(virtual_addr>=0xC0000000){
-            page_table = (uint32_t*)PHYS_TO_VIRT(pt_phys);
-        }else{
-            page_table = (uint32_t*)pt_virt;
-        }
-        
+    if(heap_ptr + size > __heap_end){
+        printf("malloc failed: out of heap memory (requested %u bytes)\n", size);
+        return 0; // Or handle error
     }
 
-    page_table[pt_index] = physical_addr | PAGE_PRESENT | PAGE_RW | (flags & PAGE_USER);
-    asm volatile("invlpg (%0)" :: "r" (virtual_addr) : "memory");
-    printf("Mapped %x to %x on PDE : %d , PTE : %d\n", physical_addr, virtual_addr, pd_index, pt_index);
+    void* ptr = (void*)heap_ptr;
+    heap_ptr+=size;
+    return ptr;
+}
+
+void *calloc(size_t nmemb, size_t size) {
+    if (nmemb == 0 || size == 0) {
+        return NULL;
+    }
+    if (size > (size_t)-1 / nmemb) {
+        return NULL;  // overflow
+    }
+    size_t total = nmemb * size;
+    void *p = malloc(total);
+    if (!p) {
+        return NULL;
+    }
+    memset(p, 0, total);
+    return p;
+}
+
+void free(void *ptr) {
+    (void)ptr;
+    // no-op: memory is never reclaimed in this simple bump allocator
 }

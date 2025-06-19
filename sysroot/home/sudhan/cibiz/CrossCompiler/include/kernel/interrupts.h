@@ -24,7 +24,6 @@ typedef struct registers {
 } registers_t;
 
 #define SYSCALL_WRITE 2
-#define SYSCALL_CLEAR 4
 
 void idt_set_gate(int num, uint32_t base, uint16_t sel, uint8_t flags);
 void idt_install();

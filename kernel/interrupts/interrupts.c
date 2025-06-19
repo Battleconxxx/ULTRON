@@ -3,8 +3,7 @@
 #include <kernel/tty.h>
 #include <kernel/interrupts.h>
 #include <kernel/keyboard_buffer.h>
-#include <kernel/syscall_args.h>
-#include <kernel/virtio_serial.h>
+
 
 extern void isr0();
 extern void isr8();
@@ -12,7 +11,6 @@ extern void isr13();
 extern void isr14();
 extern void isr32();
 extern void isr33();
-extern void isr43();
 extern void isr80();
 extern void default_isr();
 
@@ -69,7 +67,6 @@ void init_interrupts(){
     idt_set_gate(14, (uint32_t)isr14, 0x08, 0x8E); // Page fault
     idt_set_gate(32, (uint32_t)isr32, 0x08, 0x8E); // Timer
     idt_set_gate(0x21, (uint32_t)isr33, 0x08, 0x8E); //Keyboard interrupt
-    idt_set_gate(43, (uint32_t)isr43, 0x08, 0x8E); // 0x20 + 11 = IRQ11
     idt_set_gate(0x80, (uint32_t)isr80, 0x08, 0xEE);  // Interrupt gate, DPL=3 (0xEE)
 
     extern void idt_load();
@@ -131,39 +128,8 @@ void keyboard_handler() {
 }
 
 
-void virtio_irq_handler(uint32_t int_no, uint32_t err_code) {
-    uint8_t status = inb(0xc040 + 0x13);
-
-    if (status & 1) {
-        printf("VirtIO interrupt: Queue event!\n");
-
-        // Now read from used ring or handle response
-        // Check if used.idx != user_ring_idx
-    } else if (status & 2) {
-        printf("VirtIO interrupt: Configuration change.\n");
-    } else {
-        printf("VirtIO interrupt: Unknown cause.\n");
-    }
-}
-
-
 #define SYSCALL_CLEAR 4
 #define SYSCALL_OPEN 5
-#define SYSCALL_READFD 6
-#define SYSCALL_WRITEFD 7
-#define SYSCALL_CLOSEFD 8
-
-extern syscall_args_t g_syscall_args;
-
-int syscall_read(int fd, void* buf, int count) {
-    // Stub: simulate reading some text
-    const char* reply = "Simulated reply\n";
-    int len = strlen(reply);
-    if (count < len) len = count;
-    memcpy(buf, reply, len);
-    return len;
-}
-
 
 
 void syscall_isr_handler(registers_t *regs) {
@@ -173,7 +139,6 @@ void syscall_isr_handler(registers_t *regs) {
         case SYSCALL_WRITE:
             terminal_writestring((const char*)regs->edx);
             const char* message = "hello from OS\n";
-            virtio_serial_send(message, 14);
             ret = 0;
             break;
 
@@ -186,53 +151,6 @@ void syscall_isr_handler(registers_t *regs) {
             const char* path = (const char*) regs->ebx;
             if (strncmp(path, "/dev/virtio-ports/socket", 20) == 0) {
                 ret = 3;  // Return dummy FD
-            } else {
-                ret = (uint32_t)-1;
-            }
-            break;
-        }
-
-        case SYSCALL_WRITEFD: {
-            int fd = regs->ebx;
-            const char* buf = (const char*) g_syscall_args.buf;
-            int count = g_syscall_args.count;
-
-            if (fd == 3) {
-                // Send buffer to QEMU via port 0xE9 (for debug), or use virtio mapping
-                for (int i = 0; i < count; i++) {
-                    outb(0xE9, buf[i]);  // QEMU debug console (temporary bridge)
-                }
-                outb(0xE9, '\n');
-                ret = count;
-            } else {
-                ret = (uint32_t)-1;
-            }
-            break;
-        }
-
-        case SYSCALL_READFD: {
-            int fd = regs->ebx;
-            char* buf = (char*) g_syscall_args.buf;
-            int count = g_syscall_args.count;
-
-            if (fd == 3) {
-                // Simulate response — in real setup, this would read from virtio or mmio
-                const char* reply = "Hello from TinyLlama!\n";
-                int len = strlen(reply);
-                if (count < len) len = count;
-                memcpy(buf, reply, len);
-                ret = len;
-            } else {
-                ret = (uint32_t)-1;
-            }
-            break;
-        }
-
-        case SYSCALL_CLOSEFD: {
-            int fd = regs->ebx;
-            if (fd == 3) {
-                terminal_writestring("Closed fd\n");
-                ret = 0;
             } else {
                 ret = (uint32_t)-1;
             }

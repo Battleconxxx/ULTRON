@@ -33,6 +33,13 @@ typedef struct {
     uint64_t length;
 } memory_region_t;
 
+typedef struct {
+    uint32_t mod_start;
+    uint32_t mod_end;
+    uint32_t string;
+    uint32_t reserved;
+} multiboot_module_t;
+
 void parse_memory_map(multiboot_info_t* mbi);
 
 #define FRAME_SIZE 4096
@@ -48,7 +55,16 @@ void init_memory();
 #define KERNEL_VIRTUAL_BASE 0xC0000000
 #define PHYS_TO_VIRT(addr) ((void*)((addr) + 0xC0000000))
 
-
 void init_paging();
+
+//heap
+
+extern uint8_t __heap_start[];
+extern uint8_t __heap_end[];
+
+void *malloc(size_t size);
+void *calloc(size_t nmemb, size_t size);
+void free(void *ptr);
+
 
 #endif

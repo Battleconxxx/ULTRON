@@ -1,12 +1,12 @@
 #include <stdio.h>
+#include <string.h>
 #include <kernel/tty.h>
 #include <kernel/gdt.h>
 #include <kernel/interrupts.h>
 #include <kernel/user.h>
 #include <kernel/memory.h>
 #include <kernel/fs.h>
-#include <kernel/pci.h>
-#include <kernel/virtio_serial.h>
+#include <kernel/initrd.h>
 
 static inline void outb(uint16_t port, uint8_t val) {
     asm volatile("outb %0, %1" : : "a"(val), "Nd"(port));
@@ -70,17 +70,28 @@ void kernel_main(uint32_t magic , multiboot_info_t* mbi) {
     ramfs_init();
     printf("RAMFS initialized\n");
     
+    printf("mods_count: %d\n", mbi->mods_count);
 
-    pci_scan_for_virtio();
-    // virtio_serial_init();
+    multiboot_module_t* modules = (multiboot_module_t*) mbi->mods_addr;
 
-    // const char* message = "hello from OS\n";
-    // virtio_serial_send(message, 14);
+    for (uint32_t i = 0; i < mbi->mods_count; i++) {
+        const char* mod_name = (const char*)modules[i].string;
+        printf("Module %d name: %s\n", i, mod_name);
+    }
+
+
+    // multiboot_module_t* modules = (multiboot_module_t*) mbi->mods_addr;
+    // void* initrd_addr = (void*)modules[0].mod_start;
+    // initrd_setup(initrd_addr);
+    // printf("Initrd setup Done\n");
+
+    // size_t model_size;
+    // void* model_data = initrd_find_file("stories15M.bin", &model_size);
+    // if (!model_data) printf("Model file not found in initrd!");
 
     outb(0x21, 0xFD);
 
     outb(0xA1, 0xF7);
-
 
 	jump_to_user_mode(stack_top, (uint32_t)user_entry);
 	printf("END");
