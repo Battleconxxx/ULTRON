@@ -1,0 +1,65 @@
+libm/math/libm_a-e_atan2.o: \
+ ../../../newlib-cygwin/newlib/libm/math/e_atan2.c \
+ ../../../newlib-cygwin/newlib/libm/common/fdlibm.h \
+ /home/sudhan/cibiz/ULTRON/newlib-cygwin/newlib/libc/include/math.h \
+ /home/sudhan/cibiz/ULTRON/newlib-cygwin/newlib/libc/include/sys/reent.h \
+ /home/sudhan/cibiz/ULTRON/newlib-cygwin/newlib/libc/include/_ansi.h \
+ newlib.h _newlib_version.h \
+ /home/sudhan/cibiz/ULTRON/newlib-cygwin/newlib/libc/include/sys/config.h \
+ /home/sudhan/cibiz/ULTRON/newlib-cygwin/newlib/libc/include/machine/ieeefp.h \
+ /home/sudhan/cibiz/ULTRON/newlib-cygwin/newlib/libc/include/sys/features.h \
+ /home/sudhan/cibiz/CrossCompiler/lib/gcc/i686-elf/16.0.0/include/stddef.h \
+ /home/sudhan/cibiz/ULTRON/newlib-cygwin/newlib/libc/include/sys/cdefs.h \
+ /home/sudhan/cibiz/ULTRON/newlib-cygwin/newlib/libc/include/machine/_default_types.h \
+ /home/sudhan/cibiz/ULTRON/newlib-cygwin/newlib/libc/include/sys/_types.h \
+ /home/sudhan/cibiz/ULTRON/newlib-cygwin/newlib/libc/include/machine/_types.h \
+ /home/sudhan/cibiz/ULTRON/newlib-cygwin/newlib/libc/include/sys/lock.h \
+ /home/sudhan/cibiz/ULTRON/newlib-cygwin/newlib/libc/include/assert.h \
+ /home/sudhan/cibiz/ULTRON/newlib-cygwin/newlib/libc/include/_ansi.h \
+ /home/sudhan/cibiz/ULTRON/newlib-cygwin/newlib/libc/include/sys/types.h \
+ /home/sudhan/cibiz/ULTRON/newlib-cygwin/newlib/libc/include/sys/_stdint.h \
+ /home/sudhan/cibiz/ULTRON/newlib-cygwin/newlib/libc/include/machine/endian.h \
+ /home/sudhan/cibiz/ULTRON/newlib-cygwin/newlib/libc/include/machine/_endian.h \
+ /home/sudhan/cibiz/ULTRON/newlib-cygwin/newlib/libc/include/sys/select.h \
+ /home/sudhan/cibiz/ULTRON/newlib-cygwin/newlib/libc/include/sys/_sigset.h \
+ /home/sudhan/cibiz/ULTRON/newlib-cygwin/newlib/libc/include/sys/_timeval.h \
+ /home/sudhan/cibiz/ULTRON/newlib-cygwin/newlib/libc/include/sys/timespec.h \
+ /home/sudhan/cibiz/ULTRON/newlib-cygwin/newlib/libc/include/sys/_timespec.h \
+ /home/sudhan/cibiz/ULTRON/newlib-cygwin/newlib/libc/include/sys/_pthreadtypes.h \
+ /home/sudhan/cibiz/ULTRON/newlib-cygwin/newlib/libc/include/sys/sched.h \
+ /home/sudhan/cibiz/ULTRON/newlib-cygwin/newlib/libc/include/machine/types.h \
+ ../../../newlib-cygwin/newlib/libm/common/math_config.h \
+ /home/sudhan/cibiz/ULTRON/newlib-cygwin/newlib/libc/include/stdint.h \
+ /home/sudhan/cibiz/ULTRON/newlib-cygwin/newlib/libc/include/sys/_intsup.h
+../../../newlib-cygwin/newlib/libm/common/fdlibm.h:
+/home/sudhan/cibiz/ULTRON/newlib-cygwin/newlib/libc/include/math.h:
+/home/sudhan/cibiz/ULTRON/newlib-cygwin/newlib/libc/include/sys/reent.h:
+/home/sudhan/cibiz/ULTRON/newlib-cygwin/newlib/libc/include/_ansi.h:
+newlib.h:
+_newlib_version.h:
+/home/sudhan/cibiz/ULTRON/newlib-cygwin/newlib/libc/include/sys/config.h:
+/home/sudhan/cibiz/ULTRON/newlib-cygwin/newlib/libc/include/machine/ieeefp.h:
+/home/sudhan/cibiz/ULTRON/newlib-cygwin/newlib/libc/include/sys/features.h:
+/home/sudhan/cibiz/CrossCompiler/lib/gcc/i686-elf/16.0.0/include/stddef.h:
+/home/sudhan/cibiz/ULTRON/newlib-cygwin/newlib/libc/include/sys/cdefs.h:
+/home/sudhan/cibiz/ULTRON/newlib-cygwin/newlib/libc/include/machine/_default_types.h:
+/home/sudhan/cibiz/ULTRON/newlib-cygwin/newlib/libc/include/sys/_types.h:
+/home/sudhan/cibiz/ULTRON/newlib-cygwin/newlib/libc/include/machine/_types.h:
+/home/sudhan/cibiz/ULTRON/newlib-cygwin/newlib/libc/include/sys/lock.h:
+/home/sudhan/cibiz/ULTRON/newlib-cygwin/newlib/libc/include/assert.h:
+/home/sudhan/cibiz/ULTRON/newlib-cygwin/newlib/libc/include/_ansi.h:
+/home/sudhan/cibiz/ULTRON/newlib-cygwin/newlib/libc/include/sys/types.h:
+/home/sudhan/cibiz/ULTRON/newlib-cygwin/newlib/libc/include/sys/_stdint.h:
+/home/sudhan/cibiz/ULTRON/newlib-cygwin/newlib/libc/include/machine/endian.h:
+/home/sudhan/cibiz/ULTRON/newlib-cygwin/newlib/libc/include/machine/_endian.h:
+/home/sudhan/cibiz/ULTRON/newlib-cygwin/newlib/libc/include/sys/select.h:
+/home/sudhan/cibiz/ULTRON/newlib-cygwin/newlib/libc/include/sys/_sigset.h:
+/home/sudhan/cibiz/ULTRON/newlib-cygwin/newlib/libc/include/sys/_timeval.h:
+/home/sudhan/cibiz/ULTRON/newlib-cygwin/newlib/libc/include/sys/timespec.h:
+/home/sudhan/cibiz/ULTRON/newlib-cygwin/newlib/libc/include/sys/_timespec.h:
+/home/sudhan/cibiz/ULTRON/newlib-cygwin/newlib/libc/include/sys/_pthreadtypes.h:
+/home/sudhan/cibiz/ULTRON/newlib-cygwin/newlib/libc/include/sys/sched.h:
+/home/sudhan/cibiz/ULTRON/newlib-cygwin/newlib/libc/include/machine/types.h:
+../../../newlib-cygwin/newlib/libm/common/math_config.h:
+/home/sudhan/cibiz/ULTRON/newlib-cygwin/newlib/libc/include/stdint.h:
+/home/sudhan/cibiz/ULTRON/newlib-cygwin/newlib/libc/include/sys/_intsup.h:
