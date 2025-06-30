@@ -1,0 +1,4 @@
+config BR2_PACKAGE_RUN
+    bool "run"
+    help
+      Your AI run.c agent.

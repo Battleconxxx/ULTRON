@@ -1,0 +1,15 @@
+# Buildroot output
+output/
+build/
+dl/
+*.img
+*.iso
+*.tar.gz
+*.gz
+*.xz
+*.o
+*.bin
+*.patch
+*.log
+*.swp
+
